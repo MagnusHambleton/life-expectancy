@@ -30,48 +30,47 @@ var valueline = d3.line()
 // })
 
 
-function move () 
-{
-
-var data1 = d3.tsv("data1.tsv", function(d) {
-    d.date = parseTime(d.date);
-    d.close = +d.close;
-    return d;
-}, function(data){
-    //d3.selectAll('.line').transition().duration(500);
-    d3.selectAll('.line')
-        .datum(data).transition().duration(500)
-        .attr('d',valueline)
-})
-
-}
-function move_back () 
-{
-
-var data = d3.tsv("data.tsv", function(d) {
-    d.date = parseTime(d.date);
-    d.close = +d.close;
-    return d;
-}, function(data){
-    //d3.selectAll('.line').transition().duration(500);
-    d3.selectAll('.line')
-        .datum(data).transition().duration(500)
-        .attr('d',valueline)
-})
-}
 
 
-function init()
-{
-    d3.tsv("data.tsv", function(d) {
+
+
+
+
+
+
+
+d3.tsv("data.tsv", function(d) {
   d.date = parseTime(d.date);
   d.close = +d.close;
   return d;
-}, function(error, data) {
-  if (error) throw error;
+}, function(error,firstdata){
+    if (error) throw error;
+    
+    function move () 
+    {
+        //d3.selectAll('.line').transition().duration(500);
+        d3.tsv("data1.tsv", function(d) {
+            d.date = parseTime(d.date);
+            d.close = +d.close;
+            return d;
+        }, function(data1){
+            d3.selectAll('.line')
+                .datum(data1).transition().duration(500)
+                .attr('d',valueline)
+        })
 
-  x.domain(d3.extent(data, function(d) { return d.date; }));
-  y.domain(d3.extent(data, function(d) { return d.close; }));
+    }
+
+    function move_back () 
+    {
+        d3.selectAll('.line')
+            .datum(firstdata).transition().duration(500)
+            .attr('d',valueline);
+    }
+
+
+  x.domain(d3.extent(firstdata, function(d) { return d.date; }));
+  y.domain(d3.extent(firstdata, function(d) { return d.close; }));
 
   g.append("g")
       .attr("class", "axis axis--x")
@@ -90,14 +89,14 @@ function init()
       .text("Price ($)");
 
   g.append("path")
-      .datum(data)
+      .datum(firstdata)
       .attr("class", "line")
       .attr("d", valueline);
     
     d3.selectAll('.line')
         .style('fill','none')
         .attr('stroke','steelblue')
-});
+
 
     //setup the svg
     var svg = d3.select("svg")
@@ -111,12 +110,9 @@ function init()
         .on("click", function(d,i) {
             move_back()
         })   
-    // d3.select("#random")
-    //     .on("click", function(d,i) {
-    //         num = document.getElementById("num").value
-    //         bars(random(num))
-    //     })   
+
+})
 
 
-    //make the bars
-}
+// })
+// })
