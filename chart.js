@@ -4,62 +4,108 @@
 //http://www.recursion.org/d3-for-mere-mortals/
 //http://mbostock.github.com/d3/tutorial/bar-1.html
 
-// var svg = d3.select("svg"),
-//     margin = {top: 20, right: 20, bottom: 30, left: 50},
-//     width = +svg.attr("width") - margin.left - margin.right,
-//     height = +svg.attr("height") - margin.top - margin.bottom,
-    
 
-function move_circle () 
+var svg = d3.select("svg"),
+    margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = +svg.attr("width") - margin.left - margin.right,
+    height = +svg.attr("height") - margin.top - margin.bottom,
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var parseTime = d3.timeParse("%d-%b-%y");
+
+var x = d3.scaleTime()
+    .rangeRound([0, width]);
+
+var y = d3.scaleLinear()
+    .rangeRound([height, 0]);
+
+var valueline = d3.line()
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.close); });
+
+// var data1 = d3.tsv("data1.tsv", function(d) {
+//     d.date = parseTime(d.date);
+//     d.close = +d.close;
+//     return d;
+// })
+
+
+function move () 
 {
-    d3.select('circle').transition().duration(500).attr("cx",500)
-    d3.select('line').transition().duration(500)
-        .attr("x1", 34)
-        .attr("y1", 889)
-        .attr("x2", 230)
-        .attr("y2", 1)
-        .attr("stroke-width", 4)
-        .attr("stroke", "red");
 
+var data1 = d3.tsv("data1.tsv", function(d) {
+    d.date = parseTime(d.date);
+    d.close = +d.close;
+    return d;
+}, function(data){
+    //d3.selectAll('.line').transition().duration(500);
+    d3.selectAll('.line')
+        .datum(data).transition().duration(500)
+        .attr('d',valueline)
+})
 
 }
 function move_back () 
 {
-    d3.select('circle').transition().duration(500).attr("cx",50)
-    d3.select('line').transition().duration(500)
-        .attr("x1", 5)
-        .attr("y1", 5)
-        .attr("x2", 50)
-        .attr("y2", 50)
-        .attr("stroke-width", 2)
-        .attr("stroke", "black");
+
+var data = d3.tsv("data.tsv", function(d) {
+    d.date = parseTime(d.date);
+    d.close = +d.close;
+    return d;
+}, function(data){
+    //d3.selectAll('.line').transition().duration(500);
+    d3.selectAll('.line')
+        .datum(data).transition().duration(500)
+        .attr('d',valueline)
+})
 }
 
 
 function init()
 {
+    d3.tsv("data.tsv", function(d) {
+  d.date = parseTime(d.date);
+  d.close = +d.close;
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  x.domain(d3.extent(data, function(d) { return d.date; }));
+  y.domain(d3.extent(data, function(d) { return d.close; }));
+
+  g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  g.append("g")
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(y))
+    .append("text")
+      .attr("fill", "#000")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .style("text-anchor", "end")
+      .text("Price ($)");
+
+  g.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", valueline);
     
+    d3.selectAll('.line')
+        .style('fill','none')
+        .attr('stroke','steelblue')
+});
 
     //setup the svg
     var svg = d3.select("svg")
 
-    svg.append("circle")
-        .attr('cx',50)
-        .attr('cy',50)
-        .attr('r',20)
-        .style('fill','rgb(255,0,255)')
-
-    svg.append("line")
-        .attr("x1", 5)
-        .attr("y1", 5)
-        .attr("x2", 50)
-        .attr("y2", 50)
-        .attr("stroke-width", 2)
-        .attr("stroke", "black");
     //setup our ui
     d3.select("#data1")
         .on("click", function(d,i) {
-            move_circle()
+            move()
         })   
     d3.select("#data2")
         .on("click", function(d,i) {
