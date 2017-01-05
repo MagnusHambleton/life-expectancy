@@ -1,9 +1,3 @@
-//Simple d3.js barchart example to illustrate d3 selections
-
-//other good related tutorials
-//http://www.recursion.org/d3-for-mere-mortals/
-//http://mbostock.github.com/d3/tutorial/bar-1.html
-
 
 var svg = d3.select("svg"),
     margin = {top: 20, right: 50, bottom: 30, left: 50},
@@ -20,12 +14,12 @@ var y = d3.scaleLinear()
     .rangeRound([height, 0]);
 
 var valueline = d3.line()
-    .x(function(d) { return x(d.age); })
-    .y(function(d) { return y(d.death); });
+    .x(function(d) { return x(d.Age); })
+    .y(function(d) { return y(d.ext); });
 
 var valueline2 = d3.line()
-    .x(function(d) { return x(d.age); })
-    .y(function(d) { return y(d.deathalt); });
+    .x(function(d) { return x(d.Age); })
+    .y(function(d) { return y(d.circ); });
 
 function update_numbers(num1,num2) {
     var format = d3.format(",d");
@@ -45,13 +39,12 @@ function update_numbers(num1,num2) {
                 i = d3.interpolateNumber(that.text(), num2);
             return function(t) { that.text(format(i(t))); };
           })
-
 }
 
 d3.csv("Agedata.csv", function(d) {
-  d.age = +d.age;
-  d.death = +d.death;
-  d.deathalt=+d.deathalt
+  d.age = +d.Age;
+  d.ext = +d.ext;
+  d.canc=+d.circ;
   return d;
 }, function(error,firstdata){
     if (error) throw error;
@@ -78,18 +71,18 @@ d3.csv("Agedata.csv", function(d) {
 
 
   x.domain(d3.extent(firstdata, function(d) { return d.age; }));
-  y.domain(d3.extent(firstdata, function(d) { return d.death; }));
+  y.domain(d3.extent(firstdata, function(d) { return d.circ; }));
 
   g.append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x))
-    // .append("text")
-    //   .attr("fill", "#000")
-    //   .attr("y", height)
+    .append("text")
+       .attr("fill", "#000")
+       .attr("x", width)
     //   .attr("dx", width)
-    //   .style("text-anchor", "end")
-    //   .text("Age");
+       .style("text-anchor", "end")
+       .text("Age");
 
   g.append("g")
       .attr("class", "axis axis--y")
@@ -166,10 +159,7 @@ svg.append('text')
     .attr('font-size',bignumbersize);
 
 
-var slidersvg = d3.select(".slider"),
-    margin = {right: 50, left: 50},
-    width = +slidersvg.attr("width") - margin.left - margin.right,
-    height = +slidersvg.attr("height");
+var slidersvg = d3.select(".slider");
 
 var xs = d3.scaleLinear()
     .domain([0, 180])
