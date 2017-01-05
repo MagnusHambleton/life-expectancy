@@ -1,16 +1,124 @@
 <!DOCTYPE html>
 <html>
  <head>
-    <title>Bar Transition Example</title>
+    <title>Life expectancy</title>
     <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
-    
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
     <style type="text/css">
         #demo { 
             float: left;        
         }
+        body {
+          font-family: 'Lato', sans-serif;
+        }
+        .container {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+        }
+        h1 {
+          font-family: 'Alegreya Sans', sans-serif;
+          font-weight: 300;
+          margin-top: 0;
+        }
+        .control-group {
+          display: inline-block;
+          vertical-align: top;
+          background: #fff;
+          text-align: left;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          padding: 30px;
+          width: 200px;
+          height: 210px;
+          margin: 10px;
+        }
+        .control {
+          display: block;
+          position: relative;
+          padding-left:30px;
+          margin-bottom: 15px;
+          cursor: pointer;
+          font-size: 18px;
+        }
+          
+        .control input {
+          position: absolute;
+          z-index: -1;
+          opacity: 0;
+         }
+        .control__indicator {
+          position: absolute;
+          top: 2px;
+          left: 0;
+          height: 20px;
+          width: 20px;
+          background:#fcf2b5;
+        }
+        .control:hover input:not([disabled]):checked ~ .control__indicator,
+        .control input:checked ~ .control__indicator {
+          background: #fade29;
+        }
+
+        .control__indicator:after {
+          content: '';
+          position: absolute;
+          display: none;
+        }
+        .control input:checked ~ .control__indicator:after {
+          display: block;
+        }
+        .control--checkbox .control__indicator:after {
+          left: 8px;
+          top: 4px;
+          width: 3px;
+          height: 8px;
+          border: solid #fff;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+        }
+        .control--checkbox input:disabled ~ .control__indicator:after {
+          border-color: #7b7b7b;
+        }
+        .ticks {
+          font: 10px sans-serif;
+        }
+
+        .track,
+        .track-inset,
+        .track-overlay {
+          stroke-linecap: round;
+        }
+
+        .track {
+          stroke: #000;
+          stroke-opacity: 0.3;
+          stroke-width: 10px;
+        }
+
+        .track-inset {
+          stroke: #ddd;
+          stroke-width: 8px;
+        }
+
+        .track-overlay {
+          pointer-events: stroke;
+          stroke-width: 50px;
+          cursor: crosshair;
+        }
+
+        .handle {
+          fill: #fff;
+          stroke: #000;
+          stroke-opacity: 0.5;
+          stroke-width: 1.25px;
+        }
+
     </style>
  </head>
- <body style="background-color:#FADE29">
+ <body style="background-color: lightgrey">
     
     <div id="demo">
         <div id="buttons">
@@ -18,10 +126,32 @@
         <button id="data2">Move back</button>
         <br>
         </div>
-    <svg width="960" height="500"></svg>
-    <script type="text/javascript" src="chart.js"></script>
+    <svg width="600" height="500"></svg>
+    <svg class='numbers' width="400" height="500"></svg>
+
     </div>
-
-
+    <div class="container">
+      <div class="control-group">
+        <h1>Checkboxes</h1>
+        <label class="control control--checkbox">First checkbox
+          <input type="checkbox" checked="checked"/>
+          <div class="control__indicator"></div>
+        </label>
+        <label class="control control--checkbox">Second checkbox
+          <input type="checkbox"/>
+          <div class="control__indicator"></div>
+        </label>
+        <label class="control control--checkbox">Disabled
+          <input type="checkbox"/>
+          <div class="control__indicator"></div>
+        </label>
+        <label class="control control--checkbox">Disabled & checked
+          <input type="checkbox" checked="checked"/>
+          <div class="control__indicator"></div>
+        </label>
+      </div>
+    </div>
+    <svg class='slider' width="960" height="500"></svg>
+        <script type="text/javascript" src="chart.js"></script>
  </body>
 </html>
