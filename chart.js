@@ -95,8 +95,8 @@ d3.csv("Agedata.csv", function(d) {
 
     g.append("text")
       .attr("x", width+20)
-      .text("65");
-      .style("font-size",height+"px")
+      .text("65")
+      .style("font-size",height+"px");
 
     //setup the svg
     var svg = d3.select("svg")
