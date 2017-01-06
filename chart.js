@@ -14,12 +14,14 @@ var y = d3.scaleLinear()
     .rangeRound([height, 0]);
 
 var valueline = d3.line()
-    .x(function(d) { return x(d.Age); })
+    .x(function(d) { return x(d.age); })
     .y(function(d) { return y(d.ext); });
 
 var valueline2 = d3.line()
-    .x(function(d) { return x(d.Age); })
+    .x(function(d) { return x(d.age); })
     .y(function(d) { return y(d.circ); });
+
+var data_length=24;
 
 function update_numbers(num1,num2) {
     var format = d3.format(",d");
@@ -42,9 +44,10 @@ function update_numbers(num1,num2) {
 }
 
 d3.csv("Agedata.csv", function(d) {
-  d.age = +d.Age;
+  d.age = +d.age;
   d.ext = +d.ext;
-  d.canc=+d.circ;
+  d.circ=+d.circ;
+  d.canc=+d.canc;
   return d;
 }, function(error,firstdata){
     if (error) throw error;
@@ -69,9 +72,44 @@ d3.csv("Agedata.csv", function(d) {
             .attr('d',valueline);
     }
 
+    d3.selectAll('.checkbox').on('change',update);
+
+    function update ()
+    {
+        var canc_check=d3.select('.canc').property('checked');
+        var circ_check=d3.select('.circ').property('checked');
+        var ext_check=d3.select('.ext').property('checked');
+
+        var ydata=function(d) { return d.ext*ext_check+d.canc*canc_check+d.circ*circ_check; };
+
+        var valuelinecheck = d3.line()
+            .x(function(d) { return x(d.age); })
+            .y(function(d) { return y(ydata(d)); });
+
+        d3.selectAll('.line')
+            .datum(firstdata).transition().duration(500)
+            .attr('d',valuelinecheck);
+
+        var ydata=firstdata.map(function(d) { return {age: d.age, prob: d.ext*ext_check+d.canc*canc_check+d.circ*circ_check}; })
+
+        console.log(ydata);
+        calculate_ages(ydata);
+
+    }
+    function calculate_ages(d) 
+    {
+        for(i=data_length; i<1000; i++) {
+            var new_age=d[i-1].age+2;
+            var new_prob=Math.min(d[i-1].prob+(d[20].prob-d[19].prob)/(d[20].age-d[19].age)*(new_age-d[i-1].age),1)
+            d[i]={age: new_age,prob:new_prob}
+        }
+        console.log(d);
+
+    }
+
 
   x.domain(d3.extent(firstdata, function(d) { return d.age; }));
-  y.domain(d3.extent(firstdata, function(d) { return d.circ; }));
+  y.domain(d3.extent(firstdata, function(d) { return d.circ+d.ext+d.canc; }));
 
   g.append("g")
       .attr("class", "axis axis--x")
