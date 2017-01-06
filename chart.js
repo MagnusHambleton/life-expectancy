@@ -13,13 +13,9 @@ var x = d3.scaleLinear()
 var y = d3.scaleLinear()
     .rangeRound([height, 0]);
 
-var valueline = d3.line()
+var valuelinecheck = d3.line()
     .x(function(d) { return x(d.age); })
-    .y(function(d) { return y(d.ext); });
-
-var valueline2 = d3.line()
-    .x(function(d) { return x(d.age); })
-    .y(function(d) { return y(d.circ); });
+    .y(function(d) { return y(d.prob); });
 
 var data_length=24;
 
@@ -51,51 +47,34 @@ d3.csv("Agedata.csv", function(d) {
   return d;
 }, function(error,firstdata){
     if (error) throw error;
-    
-    function move () 
-    {
-        // firstdata.forEach(function(d) {
-        //     d.date = parseTime(d.date);
-        //     d.close = +d.close-1;
-        // });
-        d3.selectAll('.line')
-            .datum(firstdata).transition().duration(500)
-            .attr('d',valueline2)
-            // debugger
-
-    }
-
-    function move_back () 
-    {
-        d3.selectAll('.line')
-            .datum(firstdata).transition().duration(500)
-            .attr('d',valueline);
-    }
 
     d3.selectAll('.checkbox').on('change',update);
 
     function update ()
     {
-        var canc_check=d3.select('.canc').property('checked');
-        var circ_check=d3.select('.circ').property('checked');
-        var ext_check=d3.select('.ext').property('checked');
 
-        var ydata=function(d) { return d.ext*ext_check+d.canc*canc_check+d.circ*circ_check; };
+        var labels=d3.keys(firstdata[0]);
+        var include_var ={};
+        for(i=1; i<labels.length-1;i++){
+            include_var[labels[i]]=d3.select('.'+labels[i]).property('checked');
 
-        var valuelinecheck = d3.line()
-            .x(function(d) { return x(d.age); })
-            .y(function(d) { return y(ydata(d)); });
+        }
 
+        var ydata=firstdata.map(function(d) { 
+            var sums=0;
+            for(i=1; i<labels.length-1;i++){
+                sums=sums+d[labels[i]]*include_var[labels[i]];
+            }
+            return {age: d.age, prob: sums}; 
+        });
+        x.domain(d3.extent(ydata, function(d) { return d.age; }));
+        y.domain(d3.extent(ydata, function(d) { return d.prob; }));
         d3.selectAll('.line')
-            .datum(firstdata).transition().duration(500)
+            .datum(ydata).transition().duration(500)
             .attr('d',valuelinecheck);
-
-        var ydata=firstdata.map(function(d) { return {age: d.age, prob: d.ext*ext_check+d.canc*canc_check+d.circ*circ_check}; })
-
-        console.log(ydata);
         calculate_ages(ydata);
-
     }
+
     function calculate_ages(d) 
     {
         for(i=data_length; i<1000; i++) {
@@ -103,13 +82,33 @@ d3.csv("Agedata.csv", function(d) {
             var new_prob=Math.min(d[i-1].prob+(d[20].prob-d[19].prob)/(d[20].age-d[19].age)*(new_age-d[i-1].age),1)
             d[i]={age: new_age,prob:new_prob}
         }
-        console.log(d);
-
+        var people_alive=100;
+        var people_dead=0;
+        var life=0;
+        var median_needed=true;
+        for(i=0; i<1000; i++) {
+            if(i==0) {
+                people_dead=d[i].prob*people_alive;
+            } else {
+                people_dead=people_alive - people_alive*Math.pow((1-d[i].prob),(d[i].age-d[i-1].age));
+            }
+            life+=people_dead*d[i].age;
+            people_alive=people_alive-people_dead;
+            if(people_alive<50 && median_needed) {
+                median_age=d[i-1].age+(d[i].age-d[i-1].age)*(people_alive+people_dead-50)/(people_dead);
+                median_needed=false;
+            }
+        }
+        var average_age=life/100;
+        if(people_alive>50) {
+            average_age=0;
+            median_age=0;
+        }
+        update_numbers(average_age,median_age);
+        return [average_age,median_age];
     }
 
-
-  x.domain(d3.extent(firstdata, function(d) { return d.age; }));
-  y.domain(d3.extent(firstdata, function(d) { return d.circ+d.ext+d.canc; }));
+update();
 
   g.append("g")
       .attr("class", "axis axis--x")
@@ -133,11 +132,19 @@ d3.csv("Agedata.csv", function(d) {
       .style("text-anchor", "end")
       .text("Probability of death (% per year)");
 
+
+var canc_check=d3.select('.canc').property('checked');
+var circ_check=d3.select('.circ').property('checked');
+var ext_check=d3.select('.ext').property('checked');
+
+var ydata=firstdata.map(function(d) { return {age: d.age, prob: d.ext*ext_check+d.canc*canc_check+d.circ*circ_check}; })
+ 
   g.append("path")
-      .datum(firstdata)
+      .datum(ydata)
       .attr("class", "line")
-      .attr("d", valueline);
-    
+      .attr("d", valuelinecheck);
+ 
+
     d3.selectAll('.line')
         .style('fill','none')
         .attr('stroke','#000000')
@@ -145,18 +152,6 @@ d3.csv("Agedata.csv", function(d) {
 
     //setup the svg
     var svg = d3.select("svg")
-
-    //setup our ui
-    d3.select("#data1")
-        .on("click", function(d,i) {
-            move()
-            update_numbers(72,65);
-        })   
-    d3.select("#data2")
-        .on("click", function(d,i) {
-            move_back()
-            update_numbers(154,85);
-        })   
 
 })
 
