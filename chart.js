@@ -1,14 +1,14 @@
 
 var svg = d3.select("svg"),
-    margin = {top: 20, right: 50, bottom: 30, left: 50},
+    margin = {top: 20, right: 20, bottom: 30, left: 50},
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 //var parseTime = d3.timeParse("%d-%b-%y");
 
-var x = d3.scaleLinear()
-    .rangeRound([0, width]);
+    var x = d3.scaleLinear()
+        .rangeRound([0, width]);
 
 var y = d3.scaleLinear()
     .rangeRound([height, 0]);
@@ -54,10 +54,10 @@ d3.csv("Agedata.csv", function(d) {
     {
 
         var labels=d3.keys(firstdata[0]);
-        var include_var ={};
-        for(i=1; i<labels.length-1;i++){
-            include_var[labels[i]]=d3.select('.'+labels[i]).property('checked');
 
+        var include_var ={};
+        for(i=1; i<labels.length;i++){
+            include_var[labels[i]]=d3.select('.'+labels[i]).property('checked');
         }
 
         var ydata=firstdata.map(function(d) { 
@@ -67,16 +67,27 @@ d3.csv("Agedata.csv", function(d) {
             }
             return {age: d.age, prob: sums}; 
         });
-        x.domain(d3.extent(ydata, function(d) { return d.age; }));
-        y.domain(d3.extent(ydata, function(d) { return d.prob; }));
         d3.selectAll('.line')
             .datum(ydata).transition().duration(500)
             .attr('d',valuelinecheck);
-        calculate_ages(ydata);
+
+        // x.domain(d3.extent(ydata, function(d) { return d.age; }));
+        // y.domain(d3.extent(ydata, function(d) { return d.prob; }));
+
+        // d3.select(".axis--x").call(d3.axisBottom(x));
+        // d3.select(".axis--y").transition().duration(500).call(d3.axisLeft(y));
+
+        d3.selectAll('.line')
+            .datum(ydata).transition().duration(500)
+            .attr('d',valuelinecheck);
+        var [average_age,median_age]=calculate_ages(ydata);
+        update_numbers(average_age,median_age)
+
     }
 
-    function calculate_ages(d) 
+    function calculate_ages(s) 
     {
+        var d=s
         for(i=data_length; i<1000; i++) {
             var new_age=d[i-1].age+2;
             var new_prob=Math.min(d[i-1].prob+(d[20].prob-d[19].prob)/(d[20].age-d[19].age)*(new_age-d[i-1].age),1)
@@ -104,11 +115,20 @@ d3.csv("Agedata.csv", function(d) {
             average_age=0;
             median_age=0;
         }
-        update_numbers(average_age,median_age);
         return [average_age,median_age];
     }
 
-update();
+var canc_check=d3.select('.canc').property('checked');
+var circ_check=d3.select('.circ').property('checked');
+var ext_check=d3.select('.ext').property('checked');
+var tempdata=firstdata.map(function(d) { return {age: d.age, prob: d.ext*ext_check+d.canc*canc_check+d.circ*circ_check}; });
+
+x.domain(d3.extent(tempdata, function(d) { return d.age; }));
+y.domain(d3.extent(tempdata, function(d) { return d.prob; }));
+
+d3.select(".axis--x").call(d3.axisBottom(x))
+d3.select(".axis--y").call(d3.axisLeft(y))
+
 
   g.append("g")
       .attr("class", "axis axis--x")
@@ -133,17 +153,14 @@ update();
       .text("Probability of death (% per year)");
 
 
-var canc_check=d3.select('.canc').property('checked');
-var circ_check=d3.select('.circ').property('checked');
-var ext_check=d3.select('.ext').property('checked');
 
-var ydata=firstdata.map(function(d) { return {age: d.age, prob: d.ext*ext_check+d.canc*canc_check+d.circ*circ_check}; })
+
  
   g.append("path")
-      .datum(ydata)
+      .datum(tempdata)
       .attr("class", "line")
       .attr("d", valuelinecheck);
- 
+ update();
 
     d3.selectAll('.line')
         .style('fill','none')
@@ -161,35 +178,38 @@ var bignumbersize = height/2+'px';
 
 var svg=d3.select('.numbers')
 
+var bigweight=800;
+var smallweight=600;
+
 svg.append('text')
     .attr("y", height/10)
     .attr("x", 0)
     .text('Average:')
-    .attr("fill", "#000")
-    .attr('font-size',height/10+'px');
+    .attr('font-size',height/10+'px')
+    .attr('font-weight',smallweight);
 
 svg.append('text')
     .attr('id','average')
     .attr("y", height/2)
     .attr("x", 0)
     .text(average)
-    .attr("fill", "#000")
-    .attr('font-size',bignumbersize);
+    .attr('font-size',bignumbersize)
+    .attr('font-weight',bigweight);
 
 svg.append('text')
     .attr("y", height*6/10)
     .attr("x", 0)
     .text('Median:')
-    .attr("fill", "#000")
-    .attr('font-size',height/10+'px');
+    .attr('font-size',height/10+'px')
+    .attr('font-weight',smallweight);
 
 svg.append('text')
     .attr('id','median')
     .attr("y", height)
     .attr("x", 0)
     .text(median)
-    .attr("fill", "#000")
-    .attr('font-size',bignumbersize);
+    .attr('font-size',bignumbersize)
+    .attr('font-weight',bigweight);
 
 
 var slidersvg = d3.select(".slider");
