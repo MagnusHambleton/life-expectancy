@@ -10,7 +10,7 @@ var svg = d3.select("svg"),
     var x = d3.scaleLinear()
         .rangeRound([0, width]);
 
-var y = d3.scaleLinear()
+var y = d3.scaleLog()
     .rangeRound([height, 0]);
 
 var valuelinecheck = d3.line()
