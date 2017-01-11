@@ -1,11 +1,10 @@
 
-var svg = d3.select("svg"),
+var svg = d3.select('#graph'),
     margin = {top: 20, right: 20, bottom: 30, left: 50},
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-//var parseTime = d3.timeParse("%d-%b-%y");
 
     var x = d3.scaleLinear()
         .rangeRound([0, width]);
@@ -39,6 +38,21 @@ function update_numbers(num1,num2) {
           })
 }
 
+// find closest num in array (used in finding closest matching age for slider)
+function closest(array,num){
+    var i=0;
+    var minDiff=1000;
+    var ans;
+    for(i in array){
+         var m=Math.abs(num-array[i]);
+         if(m<minDiff){ 
+                minDiff=m; 
+                ans=array[i]; 
+            }
+      }
+    return ans;
+}
+
 d3.csv("Agedata.csv", function(d) {
   d.age = +d.age;
   d.ext = +d.ext;
@@ -55,11 +69,17 @@ d3.csv("Agedata.csv", function(d) {
 
         var labels=d3.keys(firstdata[0]);
 
+        // get which checkboxes are ticked
         var include_var ={};
         for(i=1; i<labels.length;i++){
             include_var[labels[i]]=d3.select('.'+labels[i]).property('checked');
         }
 
+        var stop_ageing =d3.select(".ageing").property('checked');
+
+        var age_stop_ageing = closest(firstdata.map(function(d) {return d.age;}),Math.ceil(x_slider.invert(handle.attr('cx'))));
+
+        // add all the causes together and find the age
         var ydata=firstdata.map(function(d) { 
             var sums=0;
             for(i=1; i<labels.length-1;i++){
@@ -67,6 +87,18 @@ d3.csv("Agedata.csv", function(d) {
             }
             return {age: d.age, prob: sums}; 
         });
+        if(stop_ageing) {
+            var past_age = false;
+            for(i=1; i<data_length; i++) {
+                if(ydata[i-1].age==age_stop_ageing){
+                    past_age = true;
+                }
+                if(past_age) {
+                    ydata[i].prob=ydata[i-1].prob;
+
+                }
+            }
+        }
         d3.selectAll('.line')
             .datum(ydata).transition().duration(500)
             .attr('d',valuelinecheck);
@@ -118,49 +150,126 @@ d3.csv("Agedata.csv", function(d) {
         return [average_age,median_age];
     }
 
-var canc_check=d3.select('.canc').property('checked');
-var circ_check=d3.select('.circ').property('checked');
-var ext_check=d3.select('.ext').property('checked');
-var tempdata=firstdata.map(function(d) { return {age: d.age, prob: d.ext*ext_check+d.canc*canc_check+d.circ*circ_check}; });
+    ///// SLIDER ///
 
-x.domain(d3.extent(tempdata, function(d) { return d.age; }));
-y.domain(d3.extent(tempdata, function(d) { return d.prob; }));
+    // to-do: work out why this fucking slider is not centering in the box
+    var slidersvg = d3.select("#slider");
 
-d3.select(".axis--x").call(d3.axisBottom(x))
-d3.select(".axis--y").call(d3.axisLeft(y))
+    var x_slider = d3.scaleLinear()
+        .domain([0, 100])
+        .range([0, width])
+        .clamp(true);
+
+    var slider = slidersvg.append("g")
+        .attr("class", "slider")
+        .attr('text-anchor','center')
+        .attr("transform", "translate(" + margin.left + "," + d3.select('#slider').attr('height')/2 + ")");
+
+    slider.append('text')
+        .attr('id','age')
+        .attr("y", -20)
+        .attr("x", width/2)
+        .attr("fill", "#000")
+        .attr('font-size',40);
 
 
-  g.append("g")
+    slider.append("line")
+        .attr("class", "track")
+        .attr("x1", x_slider.range()[0])
+        .attr("x2", x_slider.range()[1])
+      .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+        .attr("class", "track-inset")
+      .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+        .attr("class", "track-overlay")
+        .call(d3.drag()
+            .on("start.interrupt", function() { slider.interrupt(); })
+            .on("start drag", function() { update_age(Math.ceil(x_slider.invert(d3.event.x))); }));
+
+    slider.insert("g", ".track-overlay")
+        .attr("class", "ticks")
+        .attr("transform", "translate(0," + 18 + ")")
+      .selectAll("text")
+      .data(x_slider.ticks(10))
+      .enter().append("text")
+        .attr("x", x_slider)
+        .attr("text-anchor", "middle")
+        .text(function(d) { return d; });
+
+    var handle = slider.insert("circle", ".track-overlay")
+        .attr("class", "handle")
+        .attr("r", 9);
+
+    var format = d3.format(",d");
+
+    slider.transition() // Gratuitous intro!
+        .duration(750)
+        .tween("text", function() {
+          var i = d3.interpolate(0, 70);
+          return function(t) {update_age(format(i(t))); };
+        });
+
+    function update_age(h) {
+        handle.attr("cx", x_slider(h));
+        d3.select('#age')
+        .text(h);
+        update();
+    }
+
+    // set up axes to start off with (same code as inside "update()"" function
+
+    var labels=d3.keys(firstdata[0]);
+
+    var include_var ={};
+    for(i=1; i<labels.length;i++){
+        include_var[labels[i]]=d3.select('.'+labels[i]).property('checked');
+    }
+
+    var tempdata=firstdata.map(function(d) { 
+        var sums=0;
+        for(i=1; i<labels.length-1;i++){
+            sums=sums+d[labels[i]]*include_var[labels[i]];
+        }
+        return {age: d.age, prob: sums}; 
+    });
+
+    x.domain(d3.extent(tempdata, function(d) { return d.age; }));
+    y.domain(d3.extent(tempdata, function(d) { return d.prob; }));
+
+    d3.select(".axis--x").call(d3.axisBottom(x))
+    d3.select(".axis--y").call(d3.axisLeft(y))
+
+    g.append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x))
     .append("text")
        .attr("fill", "#000")
        .attr("x", width)
+       .attr('y',-5)
     //   .attr("dx", width)
        .style("text-anchor", "end")
        .text("Age");
 
-  g.append("g")
+    g.append("g")
       .attr("class", "axis axis--y")
-      .call(d3.axisLeft(y))
+      .call(d3.axisLeft(y).tickFormat(d3.format('.2%')))
     .append("text")
       .attr("fill", "#000")
       .attr("transform", "rotate(-90)")
       .attr("y", 6)
       .attr("dy", "0.71em")
       .style("text-anchor", "end")
-      .text("Probability of death (% per year)");
+      .text("Probability of death per year");
 
 
 
 
- 
-  g.append("path")
+    // draws line
+    g.append("path")
       .datum(tempdata)
       .attr("class", "line")
       .attr("d", valuelinecheck);
- update();
+    update();
 
     d3.selectAll('.line')
         .style('fill','none')
@@ -168,7 +277,7 @@ d3.select(".axis--y").call(d3.axisLeft(y))
         .attr('stroke-width',3)
 
     //setup the svg
-    var svg = d3.select("svg")
+    //var svg = d3.select("svg")
 
 })
 
@@ -212,65 +321,7 @@ svg.append('text')
     .attr('font-weight',bigweight);
 
 
-var slidersvg = d3.select(".slider");
 
-var xs = d3.scaleLinear()
-    .domain([0, 180])
-    .range([0, width])
-    .clamp(true);
-
-var slider = slidersvg.append("g")
-    .attr("class", "slider")
-    .attr("transform", "translate(" + margin.left + "," + height / 2 + ")");
-
-slider.append('text')
-    .attr('id','age')
-    .attr("y", 0)
-    .attr("x", 0)
-    .attr("fill", "#000")
-    .attr('font-size',bignumbersize);
-
-
-slider.append("line")
-    .attr("class", "track")
-    .attr("x1", xs.range()[0])
-    .attr("x2", xs.range()[1])
-  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-inset")
-  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-overlay")
-    .call(d3.drag()
-        .on("start.interrupt", function() { slider.interrupt(); })
-        .on("start drag", function() { update_age(Math.ceil(xs.invert(d3.event.x))); }));
-
-slider.insert("g", ".track-overlay")
-    .attr("class", "ticks")
-    .attr("transform", "translate(0," + 18 + ")")
-  .selectAll("text")
-  .data(xs.ticks(10))
-  .enter().append("text")
-    .attr("x", xs)
-    .attr("text-anchor", "middle")
-    .text(function(d) { return d; });
-
-var handle = slider.insert("circle", ".track-overlay")
-    .attr("class", "handle")
-    .attr("r", 9);
-
-var format = d3.format(",d");
-
-slider.transition() // Gratuitous intro!
-    .duration(750)
-    .tween("text", function() {
-      var i = d3.interpolate(0, 70);
-      return function(t) { update_age(format(i(t))); };
-    });
-
-function update_age(h) {
-    handle.attr("cx", xs(h));
-    d3.select('#age')
-    .text(h);
-}
 
 // })
 // })

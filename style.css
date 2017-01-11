@@ -2,6 +2,33 @@ body {
   font-family: 'Lato', sans-serif;
   background-color: #fade29;
 }
+
+/* Scrolling stuff */
+#sections {
+  position: relative;
+  display: inline-block;
+  width: 250px;
+  top: 0px;
+  z-index: 90;
+}
+
+.step {
+  margin-bottom: 200px;
+}
+
+#vis {
+  display: inline-block;
+  position: fixed;
+  top: 60px;
+  z-index: 1;
+  margin-left: 0;
+
+  height: 600px;
+  width: 600px;
+  background-color: #ddd;
+}
+
+/* Content */
 .numbers {
   fill:black;
   overflow: visible;
@@ -23,7 +50,6 @@ body {
 
 .container {
   max-width: 920px;
-  height: 100%;
   justify-content: center;
   align-items: center;
   text-align:center;
@@ -32,6 +58,8 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   padding: 30px;
 }
+
+/* Checkboxes */
 h1 {  
   font-weight: 300;
   margin-top: 0;
@@ -91,6 +119,14 @@ h1 {
 .control--checkbox input:disabled ~ .control__indicator:after {
   border-color: #7b7b7b;
 }
+
+/* Slider */
+.slider {
+  display:block;
+  margin:auto;
+
+}
+
 .ticks {
   font: 10px sans-serif;
 }
