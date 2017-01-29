@@ -6,7 +6,7 @@ var svg = d3.select('#graph'),
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
-    var x = d3.scaleLinear()
+var x = d3.scaleLinear()
         .rangeRound([0, width]);
 
 var y = d3.scaleLinear()
@@ -52,6 +52,8 @@ function closest(array,num){
       }
     return ans;
 }
+
+var zoomed_in=false;
 
 d3.csv("Agedata.csv", function(d) {
   d.age = +d.age;
@@ -99,10 +101,22 @@ d3.csv("Agedata.csv", function(d) {
                 }
             }
         }
+
+        // zoom in and out y axis when the graph goes below 10%
+        if(Math.max.apply(Math,ydata.map(function(d) {return d.prob;}))<0.1 && !zoomed_in) {
+            y.domain([0,0.1]);
+            zoomed_in=true;
+            d3.select(".axis--y").transition().duration(500).call(d3.axisLeft(y).tickFormat(d3.format('.2%')))
+        }
+        if(Math.max.apply(Math,ydata.map(function(d) {return d.prob;}))>.1 && zoomed_in) {
+            y.domain([0,0.28]);
+            zoomed_in=false;
+            d3.select(".axis--y").transition().duration(500).call(d3.axisLeft(y).tickFormat(d3.format('.2%')))
+        }
+
         d3.selectAll('.line')
             .datum(ydata).transition().duration(500)
             .attr('d',valuelinecheck);
-
         // x.domain(d3.extent(ydata, function(d) { return d.age; }));
         // y.domain(d3.extent(ydata, function(d) { return d.prob; }));
 
