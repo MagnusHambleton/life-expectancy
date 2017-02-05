@@ -55,6 +55,40 @@ function closest(array,num){
 
 var zoomed_in=false;
 
+// function to calculate the average and median ages to be displayed
+function calculate_ages(s) 
+{
+    var d=s
+    for(i=data_length; i<1000; i++) {
+        var new_age=d[i-1].age+2;
+        var new_prob=Math.min(d[i-1].prob+(d[20].prob-d[19].prob)/(d[20].age-d[19].age)*(new_age-d[i-1].age),1)
+        d[i]={age: new_age,prob:new_prob}
+    }
+    var people_alive=100;
+    var people_dead=0;
+    var life=0;
+    var median_needed=true;
+    for(i=0; i<1000; i++) {
+        if(i==0) {
+            people_dead=d[i].prob*people_alive;
+        } else {
+            people_dead=people_alive - people_alive*Math.pow((1-d[i].prob),(d[i].age-d[i-1].age));
+        }
+        life+=people_dead*d[i].age;
+        people_alive=people_alive-people_dead;
+        if(people_alive<50 && median_needed) {
+            median_age=d[i-1].age+(d[i].age-d[i-1].age)*(people_alive+people_dead-50)/(people_dead);
+            median_needed=false;
+        }
+    }
+    var average_age=life/100;
+    if(people_alive>50) {
+        average_age=0;
+        median_age=0;
+    }
+    return [average_age,median_age];
+}
+
 d3.csv("Agedata.csv", function(d) {
   d.age = +d.age;
   d.ext = +d.ext;
@@ -64,8 +98,10 @@ d3.csv("Agedata.csv", function(d) {
 }, function(error,firstdata){
     if (error) throw error;
 
+    // If checkboxes are changed, run the "update()" functions
     d3.selectAll('.checkbox').on('change',update);
 
+    // update chart and age numbers
     function update ()
     {
 
@@ -77,7 +113,9 @@ d3.csv("Agedata.csv", function(d) {
             include_var[labels[i]]=d3.select('.'+labels[i]).property('checked');
         }
 
+        // check whether to use slider
         var stop_ageing =d3.select(".ageing").property('checked');
+
 
         var age_stop_ageing = closest(firstdata.map(function(d) {return d.age;}),Math.ceil(x_slider.invert(handle.attr('cx'))));
 
@@ -131,38 +169,7 @@ d3.csv("Agedata.csv", function(d) {
 
     }
 
-    function calculate_ages(s) 
-    {
-        var d=s
-        for(i=data_length; i<1000; i++) {
-            var new_age=d[i-1].age+2;
-            var new_prob=Math.min(d[i-1].prob+(d[20].prob-d[19].prob)/(d[20].age-d[19].age)*(new_age-d[i-1].age),1)
-            d[i]={age: new_age,prob:new_prob}
-        }
-        var people_alive=100;
-        var people_dead=0;
-        var life=0;
-        var median_needed=true;
-        for(i=0; i<1000; i++) {
-            if(i==0) {
-                people_dead=d[i].prob*people_alive;
-            } else {
-                people_dead=people_alive - people_alive*Math.pow((1-d[i].prob),(d[i].age-d[i-1].age));
-            }
-            life+=people_dead*d[i].age;
-            people_alive=people_alive-people_dead;
-            if(people_alive<50 && median_needed) {
-                median_age=d[i-1].age+(d[i].age-d[i-1].age)*(people_alive+people_dead-50)/(people_dead);
-                median_needed=false;
-            }
-        }
-        var average_age=life/100;
-        if(people_alive>50) {
-            average_age=0;
-            median_age=0;
-        }
-        return [average_age,median_age];
-    }
+
 
     ///// SLIDER ///
 
@@ -222,6 +229,7 @@ d3.csv("Agedata.csv", function(d) {
           return function(t) {update_age(format(i(t))); };
         });
 
+    // get the position of the slider and update the chart and ages
     function update_age(h) {
         handle.attr("cx", x_slider(h));
         d3.select('#age')
@@ -246,6 +254,7 @@ d3.csv("Agedata.csv", function(d) {
         return {age: d.age, prob: sums}; 
     });
 
+    
     x.domain(d3.extent(tempdata, function(d) { return d.age; }));
     y.domain(d3.extent(tempdata, function(d) { return d.prob; }));
 
