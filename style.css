@@ -1,7 +1,6 @@
 body {
   font-family: 'Lato', sans-serif;
   background-color: #fade29;
-  padding:60px;
 }
 
 /* Scrolling stuff */
@@ -14,7 +13,7 @@ body {
 }
 
 .step {
-  margin-bottom: 400px;
+  margin-bottom: 200px;
 }
 
 #vis {
@@ -25,8 +24,8 @@ body {
   margin-left: 0;
 
   height: 600px;
-  width: 920px;
-  background-color: #fff;
+  width: 600px;
+  background-color: #ddd;
 }
 
 /* Content */
@@ -36,7 +35,7 @@ body {
 }
 #content {
     display: block;
-    max-width: 1200px;
+    max-width: 920px;
     margin:0 auto;
 }
 
