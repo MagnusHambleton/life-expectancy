@@ -307,7 +307,7 @@ var smallweight=600;
 svg.append('text')
     .attr("y", height/10)
     .attr("x", 0)
-    .text('Average:')
+    .text('Average age at death:')
     .attr('font-size',height/10+'px')
     .attr('font-weight',smallweight);
 
@@ -322,7 +322,7 @@ svg.append('text')
 svg.append('text')
     .attr("y", height*6/10)
     .attr("x", 0)
-    .text('Median:')
+    .text('Median age at death:')
     .attr('font-size',height/10+'px')
     .attr('font-weight',smallweight);
 
